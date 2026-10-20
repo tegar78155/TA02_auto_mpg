@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoMPG Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#beranda">
+                <i class="bi bi-speedometer2 me-1"></i> AutoMPG Analytics
+                <span class="brand-badge">TA-02</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#beranda">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#prediksi">Prediksi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#analisis">Analisis Model</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tentang">Tentang Proyek</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section id="beranda" class="hero-section">
+            <div class="container">
+                <span class="hero-badge"><i class="bi bi-cpu me-1"></i> MACHINE LEARNING PROJECT</span>
+                <h1 class="hero-title">Prediksi Efisiensi Bahan Bakar Mobil</h1>
+                <p class="hero-text mt-3">Model menggunakan berat kendaraan untuk memperkirakan efisiensi bahan bakar (MPG) melalui regresi linear sederhana.</p>
+                <div class="mt-3">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-2">Simple Linear Regression</span>
+                </div>
+                <div class="mt-4 d-flex gap-2 flex-wrap">
+                    <a href="#prediksi" class="btn btn-primary btn-lg"><i class="bi bi-play-fill me-1"></i> Mulai Prediksi</a>
+                    <a href="#analisis" class="btn btn-outline-secondary btn-lg">Lihat Analisis Model</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="row g-3 mb-4">
+                {% for label, value, note in [
+                    ("Total Observasi", "398", "kendaraan"),
+                    ("Data Training", "318", "80%"),
+                    ("Data Testing", "80", "20%"),
+                    ("R²", "72,30%", "variasi dijelaskan"),
+                    ("RMSE", "3,8594", "MPG"),
+                    ("MAE", "3,1178", "MPG")
+                ] %}
+                <div class="col-6 col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-label">{{ label }}</div>
+                        <div class="stat-value">{{ value }}</div>
+                        <div class="stat-note">{{ note }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6" id="prediksi">
+                    <div class="main-card">
+                        <div class="card-header-hero">
+                            <div class="eyebrow">PREDIKSI</div>
+                            <h2 class="h4 mb-0">Estimasi Efisiensi BBM</h2>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" id="predictForm">
+                                <label for="weight" class="form-label fw-semibold">Berat kendaraan (pound)</label>
+                                <input type="number" class="form-control form-control-lg mb-2" id="weight" name="weight"
+                                       min="1000" max="6000" step="any" placeholder="Contoh: 3000" value="{{ berat }}" required>
+                                <div class="form-text mb-3">Masukkan berat kendaraan antara 1.000 hingga 6.000 pound.</div>
+                                <div class="example-pills mb-3 d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-weight="2000">2000 lb</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-weight="3000">3000 lb</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-weight="4000">4000 lb</button>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
+                                    <span class="spinner-border me-2 d-none" id="spinner"></span>
+                                    Prediksi Efisiensi BBM
+                                </button>
+                            </form>
+
+                            {% if error %}
+                            <div class="alert alert-danger mt-3 mb-0" role="alert" aria-live="polite">{{ error }}</div>
+                            {% endif %}
+
+                            {% if prediksi is not none %}
+                            <div class="result-card mt-4">
+                                <p class="mb-1 text-secondary">Hasil Prediksi Efisiensi</p>
+                                <div class="result-mpg">{{ "%.2f"|format(prediksi) }}</div>
+                                <p class="fw-semibold mb-2">MPG (mil per galon)</p>
+                                <p class="text-secondary mb-2">Berat kendaraan: {{ berat }} pound</p>
+                                <div class="result-equation">MPG = 46.7821 + (-0.007805 × {{ berat }})</div>
+                                <p class="text-secondary small mt-3 mb-0">MPG menunjukkan mil per galon; nilai lebih tinggi berarti efisiensi lebih tinggi. Hasil merupakan estimasi statistik, bukan pengukuran langsung konsumsi BBM.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="visualization-card">
+                        <img src="{{ url_for('static', filename='images/scatterplot_weight_mpg.png') }}" alt="Scatterplot weight vs mpg">
+                    </div>
+                    <p class="text-secondary small mt-2">Scatterplot hubungan berat kendaraan dengan efisiensi bahan bakar dari dataset Auto MPG.</p>
+                </div>
+            </div>
+
+            <div class="analysis-card mt-4" id="analisis">
+                <h3>Analisis Model</h3>
+                <p>Regresi linear sederhana memodelkan hubungan antara satu variabel independen X (weight) dan variabel dependen y (mpg) melalui persamaan garis lurus.</p>
+                <ul>
+                    <li><strong>X:</strong> weight (berat kendaraan, pound)</li>
+                    <li><strong>y:</strong> mpg (efisiensi bahan bakar)</li>
+                    <li><strong>Persamaan:</strong> MPG = 46.7821 + (-0.007805 × weight)</li>
+                    <li><strong>Intercept:</strong> estimasi MPG saat berat kendaraan 0 pound (ekstrapolasi, tidak realistis secara fisik).</li>
+                    <li><strong>Koefisien:</strong> setiap kenaikan 1 pound berat kendaraan menurunkan MPG sebesar 0,007805.</li>
+                    <li><strong>R²:</strong> proporsi variasi target yang dapat dijelaskan model pada data pengujian (72,30%).</li>
+                    <li><strong>RMSE:</strong> rata-rata kesalahan prediksi sebesar 3,8594 MPG.</li>
+                    <li><strong>MAE:</strong> rata-rata kesalahan absolut sebesar 3,1178 MPG.</li>
+                </ul>
+                <p class="mb-0">Keterbatasan: model hanya menggunakan satu fitur sehingga mengabaikan faktor lain seperti horsepower, displacement, dan model year. Korelasi statistik tidak berarti hubungan sebab-akibat.</p>
+            </div>
+
+            <div class="analysis-card mt-4" id="tentang">
+                <h3>Tentang Proyek</h3>
+                <p>Proyek TA-02 Pembelajaran Mesin: prediksi efisiensi bahan bakar mobil menggunakan Simple Linear Regression pada dataset Auto MPG (UCI Machine Learning Repository). Data training 80%, testing 20%, random_state 42.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>AutoMPG Analytics</h5>
+                    <p class="mb-1">Proyek TA-02 Pembelajaran Mesin</p>
+                    <p class="mb-0">Metode: Simple Linear Regression</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1">Sumber dataset: Auto MPG (UCI Machine Learning Repository)</p>
+                    <p class="mb-0">Tahun pengerjaan: 2026</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
